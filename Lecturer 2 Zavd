@@ -1,0 +1,133 @@
+data class Figure(var width: Double, var height: Double) { 
+
+    private var _area: Double = width * height 
+
+  
+
+    var area: Double 
+
+        private set(value) { 
+
+            _area = value 
+
+        } 
+
+  
+
+    fun calculateArea() { 
+
+        area = width * height 
+
+    } 
+
+} 
+
+  
+
+fun main() { 
+
+    val figures = listOf( 
+
+        Figure(2.0, 3.0), 
+
+        Figure(4.0, 5.0), 
+
+        Figure(1.5, 2.5) 
+
+    ) 
+
+  
+
+    var totalArea = 0.0 
+
+  
+
+    for (figure in figures) { 
+
+        figure.calculateArea() 
+
+        totalArea += figure.area 
+
+    } 
+
+  
+
+    println("Total area: $totalArea") 
+
+  
+
+    sealed class Shape { 
+
+        data class Rectangle(val width: Double, val height: Double) : Shape() 
+
+        data class Oval(val majorRadius: Double, val minorRadius: Double) : Shape() 
+
+        object Line : Shape() 
+
+    } 
+
+  
+
+    val shapes = listOf( 
+
+        Shape.Rectangle(3.0, 4.0), 
+
+        Shape.Oval(2.0, 3.0), 
+
+        Shape.Line, 
+
+        Shape.Rectangle(1.0, 1.0) 
+
+    ) 
+
+  
+
+    // Варіант 1: Фільтрація списку 
+
+    val rectangleCount = shapes.filterIsInstance<Shape.Rectangle>().count() 
+
+    val ovalCount = shapes.filterIsInstance<Shape.Oval>().count() 
+
+    val lineCount = shapes.filterIsInstance<Shape.Line>().count() 
+
+  
+
+    // Варіант 2: Використання when в циклі 
+
+    var rectangleCount2 = 0 
+
+    var ovalCount2 = 0 
+
+    var lineCount2 = 0 
+
+  
+
+    for (shape in shapes) { 
+
+        when (shape) { 
+
+            is Shape.Rectangle -> rectangleCount2++ 
+
+            is Shape.Oval -> ovalCount2++ 
+
+            is Shape.Line -> lineCount2++ 
+
+        } 
+
+    } 
+
+  
+
+    println("Using filter:") 
+
+    println("Rectangles: $rectangleCount, Ovals: $ovalCount, Lines: $lineCount") 
+
+  
+
+    println("Using when in loop:") 
+
+    println("Rectangles: $rectangleCount2, Ovals: $ovalCount2, Lines: $lineCount2") 
+
+} 
+
+ 
