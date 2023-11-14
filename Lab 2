@@ -1,0 +1,205 @@
+//Створив файл Recipe.kt
+data class Recipe(
+    val title: String,
+    val description: String,
+    val imageUrl: String,
+    val fullText: String
+)
+// Додав необхідні бібліотеки та створив розмітки для фрагментів та елементів списку
+implementation 'com.github.bumptech.glide:glide:4.12.0'
+kapt 'com.github.bumptech.glide:compiler:4.12.0'
+implementation 'androidx.recyclerview:recyclerview:1.2.1'
+implementation 'androidx.navigation:navigation-fragment-ktx:2.3.5'
+implementation 'androidx.navigation:navigation-ui-ktx:2.3.5'
+// res/layout/fragment_recipe_list.xml (розмітка для першого фрагмента зі списком)
+<androidx.recyclerview.widget.RecyclerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/recyclerViewRecipes"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"/>
+// res/layout/fragment_recipe_detail.xml (розмітка для другого фрагмента з деталями рецепту):
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/imageViewRecipeDetail"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/placeholder"
+        android:contentDescription="Recipe Image"/>
+
+    <TextView
+        android:id="@+id/textViewTitleDetail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:layout_marginTop="16dp"/>
+
+    <TextView
+        android:id="@+id/textViewDescriptionDetail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"/>
+
+    <TextView
+        android:id="@+id/textViewFullTextDetail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>
+//Створив файл RecipeAdapter.kt для адаптера RecyclerView:
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+
+class RecipeAdapter(private val recipes: List<Recipe>, private val onRecipeClick: (Recipe) -> Unit) :
+    RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder>() {
+
+    class RecipeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val titleTextView: TextView = itemView.findViewById(R.id.textTitle)
+        val descriptionTextView: TextView = itemView.findViewById(R.id.textDescription)
+        val imageView: ImageView = itemView.findViewById(R.id.imageViewRecipe)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecipeViewHolder {
+        val itemView = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_recipe, parent, false)
+        return RecipeViewHolder(itemView)
+    }
+
+    override fun onBindViewHolder(holder: RecipeViewHolder, position: Int) {
+        val currentRecipe = recipes[position]
+        holder.titleTextView.text = currentRecipe.title
+        holder.descriptionTextView.text = currentRecipe.description
+
+        Glide.with(holder.itemView)
+            .load(currentRecipe.imageUrl)
+            .placeholder(R.drawable.placeholder)
+            .into(holder.imageView)
+
+        holder.itemView.setOnClickListener {
+            onRecipeClick(currentRecipe)
+        }
+    }
+
+    override fun getItemCount(): Int {
+        return recipes.size
+    }
+}
+// RecipeListFragment.kt (фрагмент зі списком):
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+
+class RecipeListFragment : Fragment() {
+
+    private lateinit var recyclerView: RecyclerView
+
+    private val recipes = listOf(
+        Recipe("Recipe 1", "Description 1", "https://example.com/image1.jpg", "Full text 1"),
+        Recipe("Recipe 2", "Description 2", "https://example.com/image2.jpg", "Full text 2"),
+        Recipe("Recipe 3", "Description 3", "https://example.com/image3.jpg", "Full text 3")
+    )
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val view = inflater.inflate(R.layout.fragment_recipe_list, container, false)
+        recyclerView = view.findViewById(R.id.recyclerViewRecipes)
+        return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupRecyclerView()
+    }
+
+    private fun setupRecyclerView() {
+        val adapter = RecipeAdapter(recipes) { recipe ->
+            val action = RecipeListFragmentDirections.actionRecipeListFragmentToRecipeDetailFragment(recipe)
+            findNavController().navigate(action)
+        }
+
+        recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.setHasFixedSize(true)
+    }
+}
+// RecipeDetailFragment.kt (фрагмент з деталями рецепту):
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.navArgs
+import com.bumptech.glide.Glide
+import kotlinx.android.synthetic.main.fragment_recipe_detail.*
+
+class RecipeDetailFragment : Fragment() {
+
+    private val args: RecipeDetailFragmentArgs by navArgs()
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_recipe_detail, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        displayRecipeDetails()
+    }
+
+    private fun displayRecipeDetails() {
+        val recipe = args.recipe
+        Glide.with(this)
+            .load(recipe.imageUrl)
+            .placeholder(R.drawable.placeholder)
+            .into(imageViewRecipeDetail)
+
+        textViewTitleDetail.text = recipe.title
+        textViewDescriptionDetail.text = recipe.description
+        textViewFullTextDetail.text = recipe.fullText
+    }
+}
+// nav_graph.xml
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:startDestination="@id/recipeListFragment">
+
+    <fragment
+        android:id="@+id/recipeListFragment"
+        android:name="com.example.recipeapp.RecipeListFragment"
+        android:label="Recipe List Fragment"
+        tools:layout="@layout/fragment_recipe_list">
+        <action
+            android:id="@+id/action_recipeListFragment_to_recipeDetailFragment"
+            app:destination="@id/recipeDetailFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/recipeDetailFragment"
+        android:name="com.example.recipeapp.RecipeDetailFragment"
+        android:label="Recipe Detail Fragment"
+        tools:layout="@layout/fragment_recipe_detail" >
+        <argument
+            android:name="recipe"
+            app:argType="com.example.recipeapp.Recipe"
+            app:nullable="false" />
+    </fragment>
+</navigation>
